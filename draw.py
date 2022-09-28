@@ -6,6 +6,13 @@ import colors
 from collections import namedtuple, OrderedDict
 import abc
 
+try:
+    import torch
+except:
+    class torch:
+        class Tensor:
+            pass
+
 
 def font(size):
     path = "C:/Users/yanch/Downloads/JetBrainsMono-2.242/fonts/ttf/JetBrainsMono-Light.ttf"
@@ -64,6 +71,9 @@ class Rectangle(Widget):
         self.outline = outline
         self.border = border
 
+    def __repr__(self):
+        return '<Rectangle %s>' % hash(self)
+
     def draw(self, draw_: ImageDraw, offset):
         self.offset = offset
         coor = [self.offset[0], self.offset[1], self.offset[0] + self.width + 2 * self.border,
@@ -109,16 +119,20 @@ class Rectangle(Widget):
 
 
 class Stack(Widget):
-    def __init__(self, widgets: List[Widget] = [], cstride=1, border=0, fill=None, outline=None):
+    def __init__(self, widgets: List[Widget] = None, cstride=1, border=0, fill=None, outline=None):
         super(Stack, self).__init__()
         self.cstride = cstride
         self.border = border
         self.fill = fill
         self.outline = outline
-        self.widgets = widgets
+        self.widgets = [] if not widgets else widgets
 
     def add(self, widget: Widget):
+        assert widget != self, "recursion found"
         self.widgets.append(widget)
+
+    def __repr__(self):
+        return '<Stack #%d %s>' % (len(self.widgets), hash(self))
 
     def set_border(self, border: int):
         self.border = border
@@ -140,6 +154,7 @@ class Stack(Widget):
             max_col_size = 0
             for j in range(self.cstride):
                 cur = self.widgets[i * self.cstride + j]
+                assert cur != self
                 cur.draw(draw_, (offset_x, offset_y))
                 offset_x += cur.region_size()[0]
                 max_col_size = max(max_col_size, cur.region_size()[1])
@@ -181,9 +196,10 @@ def create_canvas(size=(500, 300), fill=(128, 128, 128)) -> Tuple[ImageDraw.Imag
 
 class TensorDrawer(Widget):
     class CellConfig:
-        def __init__(self, width: int, height: int, fill=colors.SANDYBROWN, border=1, outline=colors.SEAGREEN4):
+        def __init__(self, width: int = 20, height: int = None, fill=colors.SANDYBROWN, border=1,
+                     outline=colors.SEAGREEN4):
             self.width = width
-            self.height = height
+            self.height = height if height else width
             self.fill = fill
             self.border = border
             self.outline = outline
@@ -196,31 +212,49 @@ class TensorDrawer(Widget):
                         border=self.border,
                         outline=self.outline)
 
-    def __int__(self, shape: List[int], order: List[int], data: List[int] = [], cell_config=CellConfig(20, 20)):
+    def __init__(self, shape: List[int], data: torch.Tensor = None, border=0, outline=None,
+                 cell_config=CellConfig(20, 20)):
+        super(TensorDrawer, self).__init__()
         assert len(shape) <= 3, "Tensor with more than 3 dimensions is not visualized yet."
-        assert len(shape) == len(order), "Shape and order dimension are not match"
+        self.border = border
+        self.outline = outline
         self.cell_config = cell_config
         self.shape = shape
-        self.order = order
         self.data = data if data else [i for i in range(math.prod(self.shape))]
+        self.stack = self.get_main()
 
     def draw(self, draw_: ImageDraw, offset=(0, 0), fill=None, border=0):
-        for dim in range(len(self.shape)):  # from innermost to outermost
-            stride = 1
-            for i, ord in enumerate(self.order[:dim]):
-                stride *= self.shape[ord]
-            data = [self.data[idx] for idx in range(0, len(self.data), stride)]
-            cells = [Rectangle(**self.cell_config) for i in range(data)]
+        self.stack.draw(draw_, offset)
 
-        stack = Stack(self.shape[self.order[0]])
-        if len(self.shape) == 1:
-            cell = Rectangle(**self.cell_config.dict_)
-            cells.append(cell)
+    def region_size(self) -> Tuple[int, int]:
+        size = self.stack.region_size()
+        size[0] = size[0] + 2 * self.border
+
+    def get_main(self):
+        stack = Stack(cstride=self.shape[0], border=2, outline=Widget.border_colors[0])
+        rank = len(self.shape)
+        if rank == 1:
+            for i in range(self.shape[0]):
+                cell = Rectangle(**self.cell_config.dict_)
+                stack.add(cell)
+        elif rank == 2:
+            for i in range(self.shape[0] * self.shape[1]):
+                cell = Rectangle(**self.cell_config.dict_)
+                stack.add(cell)
+        elif rank == 3:
+            for i in range(self.shape[0]):
+                row = Stack(cstride=self.shape[1], border=2, fill=Widget.border_colors[1])
+                for j in range(self.shape[1] * self.shape[2]):
+                    cell = Rectangle(**self.cell_config.dict_)
+                    row.add(cell)
+                stack.add(row)
+        return stack
 
 
 if __name__ == '__main__':
-    draw, canvas = create_canvas(size=(1200, 1200))
+    draw, canvas = create_canvas(size=(2200, 2200))
 
+    '''
     rec = Rectangle(40, 40, fill=colors.TURQUOISE.tuple_, outline=colors.THISTLE4, border=2)
     rec.text('1', fontsize=20, fill=colors.RED1, offset=(4, 4))
     recs = [rec for i in range(20)]
@@ -237,5 +271,9 @@ if __name__ == '__main__':
     main.add(table1)
 
     main.draw(draw)
+    '''
+
+    tensor = TensorDrawer(shape=[16, 16], cell_config=TensorDrawer.CellConfig(width=40))
+    tensor.draw(draw)
 
     canvas.show('demo')
