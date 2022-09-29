@@ -27,11 +27,11 @@ class Widget(abc.ABC):
 
     @abc.abstractmethod
     def draw(self, draw_: ImageDraw, offset: tuple[int, int]):
-        NotImplemented
+        raise NotImplemented
 
     @abc.abstractmethod
     def region_size(self) -> Tuple[int, int]:
-        NotImplemented
+        raise NotImplemented
 
     def text(self, content: str, fontsize: int, offset: Tuple[int, int], fill=colors.BLACK):
         text = Widget.Text(content, fontsize, offset, fill)
@@ -143,6 +143,24 @@ class Stack(Widget):
     def set_outline(self, outline):
         self.outline = outline
 
+    def get_cell(self, offset):
+        if type(self.widgets[0]) is Stack:
+            stride = self.widgets[0].total_stride
+            idx = offset // stride
+            return self.widgets[idx].get_cell(offset % stride)
+        return self.widgets[offset]
+
+    @property
+    def total_stride(self):
+        assert self.widgets
+        cls = type(self.widgets[0])
+        for other in self.widgets[1:]:
+            assert type(other) is cls, "in total_stride, all the widgets should be the same type"
+        if cls is Stack:
+            return self.cstride * self.widgets[0].total_stride
+        return self.cstride
+
+
     def draw(self, draw_: ImageDraw, offset=(0, 0)):
         assert len(self.widgets) % self.cstride == 0
         if self.border > 0:
@@ -168,7 +186,7 @@ class Stack(Widget):
 
     def region_size(self) -> Tuple[int, int]:
         x0, y0, x1, y1 = self.region_coor((0, 0))
-        return (x1 - x0, y1 - y0)
+        return [x1 - x0, y1 - y0]
 
     def region_coor(self, offset) -> Tuple[int, int, int, int]:
         max_x_size = 0
@@ -229,6 +247,11 @@ class TensorDrawer(Widget):
     def region_size(self) -> Tuple[int, int]:
         size = self.stack.region_size()
         size[0] = size[0] + 2 * self.border
+        size[1] = size[1] + 2 * self.border
+        return size
+
+    def get_cell(self, offset):
+        return self.stack.get_cell(offset)
 
     def get_main(self):
         stack = Stack(cstride=self.shape[0], border=2, outline=Widget.border_colors[0])
