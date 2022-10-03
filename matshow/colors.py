@@ -1,7 +1,7 @@
 # The color constant are borrowed from https://www.webucator.com/article/python-color-constants-module/
 # The code is not modified, all rights are reserved by the original authors.
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 
 Color = namedtuple('RGB', 'red, green, blue')
 colors = {}  # dict of colors
@@ -15,7 +15,6 @@ class RGB(Color):
     @property
     def tuple_(self):
         return (self.red, self.green, self.blue)
-
 
 
 # Color Contants

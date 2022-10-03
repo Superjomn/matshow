@@ -1,21 +1,34 @@
-import math
+__all__ = [
+    'Widget', 'Rectangle', 'Stack', 'Tensor', 'to_animation',
+    'create_canvas',
+]
 
-from PIL import Image, ImageDraw, ImageFont
-from typing import *
-import colors
-from collections import namedtuple, OrderedDict
 import abc
+import math
+from collections import OrderedDict, namedtuple
+from typing import *
+
+import imageio
+from PIL import Image, ImageDraw, ImageFont
+
+from matshow import colors
 
 try:
     import torch
-except:
+finally:
     class torch:
         class Tensor:
             pass
 
+RESOLUTION = 1
+
 
 def font(size):
-    path = "C:/Users/yanch/Downloads/JetBrainsMono-2.242/fonts/ttf/JetBrainsMono-Light.ttf"
+    '''
+    :param size:
+    :return:
+    '''
+    path = "/Users/chunwei/Downloads/JetBrainsMono-2.242/fonts/ttf/JetBrainsMono-Light.ttf"
     return ImageFont.truetype(path, size)
 
 
@@ -33,7 +46,38 @@ class Widget(abc.ABC):
     def region_size(self) -> Tuple[int, int]:
         raise NotImplemented
 
-    def text(self, content: str, fontsize: int, offset: Tuple[int, int], fill=colors.BLACK):
+    def text(self, content: str, fontsize: int,  fill=colors.BLACK,
+             pos: Tuple[int, int] = ('mid', 'mid')):
+        '''
+        :param poses: one of ('mid', 'left', 'right', 'top', 'bottom)
+        '''
+        VALID_POS = ('mid', 'left', 'right', 'top', 'bottom')
+        assert pos[0] in VALID_POS and pos[1] in VALID_POS
+
+        def get_offset(sizes: int, poses: str, i: int):
+            chars = len(content)
+            assert len(sizes) == len(poses)
+
+            pos = poses[i]
+            size = sizes[i]
+            if pos == 'mid':
+                if i == 0:
+                    return size // 2 - fontsize // 2
+                return size // 2 - fontsize*chars // 2
+            elif pos == 'left':
+                return 0
+            elif pos == 'right':
+                return size - fontsize * chars
+            elif pos == 'top':
+                return 0
+            elif pos == 'bottom':
+                return size - fontsize
+            else:
+                assert False, "pos: %s is not supported" % pos
+
+        size = self.region_size()
+        offset = [get_offset(size, pos, i) for i in range(2)]
+
         text = Widget.Text(content, fontsize, offset, fill)
         self.texts.append(text)
 
@@ -87,11 +131,13 @@ class Rectangle(Widget):
         for txt in self.texts:
             off = (offset[0] + self.border + txt.offset[0],
                    offset[1] + self.border + txt.offset[1])
-            draw_.text(text=txt.content, xy=off, font=font(txt.fontsize), fill=txt.fill)
+            draw_.text(text=txt.content, xy=off,
+                       font=font(txt.fontsize), fill=txt.fill)
 
     def _draw_text(self, draw_: ImageDraw):
         for txt in self.texts:
-            draw_.text(txt.content, font=font(txt.fontsize), offset=txt.offset, fill=txt.fill)
+            draw_.text(txt.content, font=font(txt.fontsize),
+                       offset=txt.offset, fill=txt.fill)
 
     def region_size(self) -> Tuple[int, int]:
         width = self.width + 2 * self.border
@@ -106,7 +152,8 @@ class Rectangle(Widget):
         xl = (self.x, self.y)
         xr = (self.x + self.width + self.border * 2, self.y)
         yl = (self.x, self.y + self.height)
-        yr = (self.x + self.width + self.border * 2, self.y + self.height + self.border * 2)
+        yr = (self.x + self.width + self.border * 2,
+              self.y + self.height + self.border * 2)
         return (xl, xr, yl, yr,)
 
     @property
@@ -148,6 +195,8 @@ class Stack(Widget):
             stride = self.widgets[0].total_stride
             idx = offset // stride
             return self.widgets[idx].get_cell(offset % stride)
+        if offset >= len(self.widgets):
+            return None
         return self.widgets[offset]
 
     @property
@@ -155,23 +204,26 @@ class Stack(Widget):
         assert self.widgets
         cls = type(self.widgets[0])
         for other in self.widgets[1:]:
-            assert type(other) is cls, "in total_stride, all the widgets should be the same type"
+            assert type(
+                other) is cls, "in total_stride, all the widgets should be the same type"
         if cls is Stack:
             return self.cstride * self.widgets[0].total_stride
         return self.cstride
 
-
     def draw(self, draw_: ImageDraw, offset=(0, 0)):
-        assert len(self.widgets) % self.cstride == 0
+        # assert len(self.widgets) % self.cstride == 0
         if self.border > 0:
             draw_.rectangle(self.region_coor(offset), width=self.border, fill=self.fill,
                             outline=self.outline)
         offset_y = offset[1] + self.border
-        for i in range(len(self.widgets) // self.cstride):
+        for i in range(math.ceil(len(self.widgets) / self.cstride)):
             offset_x = offset[0] + self.border
             max_col_size = 0
             for j in range(self.cstride):
-                cur = self.widgets[i * self.cstride + j]
+                abs_offset = i * self.cstride + j
+                if abs_offset >= len(self.widgets):
+                    break
+                cur = self.widgets[abs_offset]
                 assert cur != self
                 cur.draw(draw_, (offset_x, offset_y))
                 offset_x += cur.region_size()[0]
@@ -182,7 +234,8 @@ class Stack(Widget):
         for txt in self.texts:
             off = (offset[0] + self.border + txt.offset[0],
                    offset[1] + self.border + txt.offset[1])
-            draw_.text(text=txt.content, xy=off, font=font(txt.fontsize), fill=txt.fill)
+            draw_.text(text=txt.content, xy=off,
+                       font=font(txt.fontsize), fill=txt.fill)
 
     def region_size(self) -> Tuple[int, int]:
         x0, y0, x1, y1 = self.region_coor((0, 0))
@@ -191,10 +244,13 @@ class Stack(Widget):
     def region_coor(self, offset) -> Tuple[int, int, int, int]:
         max_x_size = 0
         max_y_size = 0
-        for i in range(len(self.widgets) // self.cstride):
+        for i in range(math.ceil(len(self.widgets) / self.cstride)):
             x_size = 0
             y_size = 0
             for j in range(self.cstride):
+                abs_offset = i * self.cstride + j
+                if abs_offset >= len(self.widgets):
+                    break
                 cur = self.widgets[i * self.cstride + j]
                 x_size += cur.region_size()[0]
                 y_size = max(y_size, cur.region_size()[1])
@@ -212,7 +268,7 @@ def create_canvas(size=(500, 300), fill=(128, 128, 128)) -> Tuple[ImageDraw.Imag
     return draw, im
 
 
-class TensorDrawer(Widget):
+class Tensor(Widget):
     class CellConfig:
         def __init__(self, width: int = 20, height: int = None, fill=colors.SANDYBROWN, border=1,
                      outline=colors.SEAGREEN4):
@@ -232,8 +288,9 @@ class TensorDrawer(Widget):
 
     def __init__(self, shape: List[int], data: torch.Tensor = None, border=0, outline=None,
                  cell_config=CellConfig(20, 20)):
-        super(TensorDrawer, self).__init__()
-        assert len(shape) <= 3, "Tensor with more than 3 dimensions is not visualized yet."
+        super(Tensor, self).__init__()
+        assert len(
+            shape) <= 3, "Tensor with more than 3 dimensions is not visualized yet."
         self.border = border
         self.outline = outline
         self.cell_config = cell_config
@@ -243,6 +300,13 @@ class TensorDrawer(Widget):
 
     def draw(self, draw_: ImageDraw, offset=(0, 0), fill=None, border=0):
         self.stack.draw(draw_, offset)
+
+        # draw texts
+        for txt in self.texts:
+            off = (offset[0] + self.border + txt.offset[0],
+                   offset[1] + self.border + txt.offset[1])
+            draw_.text(text=txt.content, xy=off,
+                       font=font(txt.fontsize), fill=txt.fill)
 
     def region_size(self) -> Tuple[int, int]:
         size = self.stack.region_size()
@@ -254,24 +318,36 @@ class TensorDrawer(Widget):
         return self.stack.get_cell(offset)
 
     def get_main(self):
-        stack = Stack(cstride=self.shape[0], border=2, outline=Widget.border_colors[0])
         rank = len(self.shape)
         if rank == 1:
+            stack = Stack(cstride=self.shape[0], border=2,
+                          outline=Widget.border_colors[0])
             for i in range(self.shape[0]):
                 cell = Rectangle(**self.cell_config.dict_)
                 stack.add(cell)
         elif rank == 2:
+            stack = Stack(cstride=self.shape[1], border=2,
+                          outline=Widget.border_colors[0])
             for i in range(self.shape[0] * self.shape[1]):
                 cell = Rectangle(**self.cell_config.dict_)
                 stack.add(cell)
         elif rank == 3:
+            stack = Stack(cstride=self.shape[0], border=2,
+                          outline=Widget.border_colors[0])
             for i in range(self.shape[0]):
-                row = Stack(cstride=self.shape[1], border=2, fill=Widget.border_colors[1])
+                row = Stack(
+                    cstride=self.shape[1], border=2, fill=Widget.border_colors[1])
                 for j in range(self.shape[1] * self.shape[2]):
                     cell = Rectangle(**self.cell_config.dict_)
                     row.add(cell)
                 stack.add(row)
         return stack
+
+
+def to_animation(image_paths: List[str], gif_path: str, duration: int = 1):
+    images = [imageio.imread(path) for path in image_paths]
+    print('gif_path', gif_path)
+    imageio.mimsave(gif_path, images, 'GIF', duration=duration)
 
 
 if __name__ == '__main__':
@@ -296,7 +372,7 @@ if __name__ == '__main__':
     main.draw(draw)
     '''
 
-    tensor = TensorDrawer(shape=[16, 16], cell_config=TensorDrawer.CellConfig(width=40))
+    tensor = Tensor(shape=[16, 16], cell_config=Tensor.CellConfig(width=40))
     tensor.draw(draw)
 
     canvas.show('demo')

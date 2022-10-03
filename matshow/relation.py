@@ -1,5 +1,5 @@
-from typing import *
 import abc
+from typing import *
 
 
 class Node(abc.ABC):
@@ -21,15 +21,31 @@ class Node(abc.ABC):
         self._activate_impl(offset)
 
         for rel in self.relations:
-            rel.target.activate(rel.map(offset))
+            for target in rel.map(offset):
+                rel.target.activate(target)
+
+    def mark(self, offset):
+        '''
+        Mark a cell is activated.
+        '''
+        self._mark_impl(offset)
+
+        for rel in self.relations:
+            for target in rel.map(offset):
+                rel.target.mark(target)
 
     def deactivate(self, offset):
         self._deactivate_impl(offset)
         for rel in self.relations:
-            rel.target.deactivate(rel.map(offset))
+            for target in rel.map(offset):
+                rel.target.activate(target)
 
     @abc.abstractmethod
     def _activate_impl(self, offset):
+        raise NotImplemented
+
+    @abc.abstractmethod
+    def _mark_impl(self, offset):
         raise NotImplemented
 
     @abc.abstractmethod
