@@ -32,6 +32,39 @@ def font(size):
     return ImageFont.truetype(path, size)
 
 
+class Ruler:
+    def __init__(self, width: int, height: int, resolution: int = 10, offset: Tuple[int, int] = None,
+                 parent: "Ruler" = None):
+        '''
+        :param resolution: how many pieces the ruler has.
+        :param width: relative width in current ruler system.
+        :param height: relative height in current ruler system.
+        :param offset: relative offset in parent ruler system.
+        :param parent: the parent Ruler system.
+        '''
+        self.resolution = resolution
+        self.parent = parent
+        if offset:
+            assert self.parent, "offset only works in parent Ruler system"
+        self.offset = offset if offset else (0, 0)
+        self.width = width
+        self.height = height
+
+    @property
+    def piece(self) -> Tuple[int, int]:
+        '''
+        piece in x,y
+        '''
+        if not self.parent:
+            return self.width / self.resolution, self.height / self.resolution
+        piece = self.parent.piece
+        return self.width * piece[0], self.height * piece[1]
+
+    @property
+    def abs_width(self):
+        pass
+
+
 class Widget(abc.ABC):
     Text = namedtuple('Text', 'content, fontsize, offset, fill')
 
@@ -46,7 +79,7 @@ class Widget(abc.ABC):
     def region_size(self) -> Tuple[int, int]:
         raise NotImplemented
 
-    def text(self, content: str, fontsize: int,  fill=colors.BLACK,
+    def text(self, content: str, fontsize: int, fill=colors.BLACK,
              pos: Tuple[int, int] = ('mid', 'mid')):
         '''
         :param poses: one of ('mid', 'left', 'right', 'top', 'bottom)
@@ -61,9 +94,9 @@ class Widget(abc.ABC):
             pos = poses[i]
             size = sizes[i]
             if pos == 'mid':
-                if i == 0:
-                    return size // 2 - fontsize // 2
-                return size // 2 - fontsize*chars // 2
+                if i == 1:  # y
+                    return max(size // 2 - fontsize // 2, 0)
+                return max(size // 2 - fontsize * chars // 2, 0)
             elif pos == 'left':
                 return 0
             elif pos == 'right':
@@ -129,8 +162,10 @@ class Rectangle(Widget):
 
         # draw texts
         for txt in self.texts:
-            off = (offset[0] + self.border + txt.offset[0],
-                   offset[1] + self.border + txt.offset[1])
+            off = (
+                offset[0] + self.border + txt.offset[0],
+                offset[1] + self.border + txt.offset[1],
+            )
             draw_.text(text=txt.content, xy=off,
                        font=font(txt.fontsize), fill=txt.fill)
 

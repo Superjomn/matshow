@@ -3,7 +3,7 @@ import math
 import matshow
 from matshow import gpu, relation
 
-# ======    View =====
+# ====== View =====
 CTA = matshow.TensorView([4, 8], cell_config=matshow.CellConfig(
     width=10, fill=matshow.Widget.fill_colors[0]))
 A = matshow.TensorView([16, 16], cell_config=matshow.CellConfig(
@@ -63,4 +63,6 @@ CTA_to_C.set_map(lambda tid: range(
 C_to_A.set_map(C_to_A_fn)
 C_to_B.set_map(C_to_B_fn)
 
-gpu.create_animation(stack, "./cta.gif", CTA, range(threads), duration=0.1)
+#import cProfile
+#cProfile.run('gpu.create_animation(stack, "./cta.gif", C, range(threads), duration=0.1)')
+gpu.create_animation(stack, "./cta.gif", C, range(C.numel()), duration=0.1)
