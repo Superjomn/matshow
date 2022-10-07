@@ -1,5 +1,6 @@
 __all__ = [
     'Widget', 'Rectangle', 'Stack', 'Tensor', 'to_animation',
+    'Ruler',
     'create_canvas',
 ]
 
@@ -29,7 +30,8 @@ def font(size):
     :return:
     '''
     path = "/Users/chunwei/Downloads/JetBrainsMono-2.242/fonts/ttf/JetBrainsMono-Light.ttf"
-    return ImageFont.truetype(path, size)
+    font = ImageFont.truetype(path, size)
+    return font
 
 
 class Ruler:
@@ -86,25 +88,28 @@ class Widget(abc.ABC):
         '''
         VALID_POS = ('mid', 'left', 'right', 'top', 'bottom')
         assert pos[0] in VALID_POS and pos[1] in VALID_POS
+        chars = len(content)
+        the_font = font(fontsize)
+        # get the true size with the font
+        text_size = the_font.getsize(content)
 
         def get_offset(sizes: int, poses: str, i: int):
-            chars = len(content)
             assert len(sizes) == len(poses)
 
             pos = poses[i]
             size = sizes[i]
             if pos == 'mid':
                 if i == 1:  # y
-                    return max(size // 2 - fontsize // 2, 0)
-                return max(size // 2 - fontsize * chars // 2, 0)
+                    return max(size // 2 - text_size[i] // 2, 0)
+                return max(size // 2 - text_size[i] // 2, 0)
             elif pos == 'left':
                 return 0
             elif pos == 'right':
-                return size - fontsize * chars
+                return size - text_size[i]
             elif pos == 'top':
                 return 0
             elif pos == 'bottom':
-                return size - fontsize
+                return size - text_size[i]
             else:
                 assert False, "pos: %s is not supported" % pos
 
