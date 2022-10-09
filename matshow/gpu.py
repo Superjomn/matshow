@@ -11,7 +11,8 @@ CellConfig = Tensor.CellConfig
 
 
 class TensorView(relation.Node):
-    def __init__(self, shape: List[int], cell_config=Tensor.CellConfig(), activate_fill=(Widget.fill_hl_colors[1], Widget.fill_hl_colors[0])):
+    def __init__(self, shape: List[int], cell_config=Tensor.CellConfig(),
+                 activate_fill=(Widget.fill_hl_colors[1], Widget.fill_hl_colors[0])):
         super(TensorView, self).__init__(0, 31)
         self._shape = shape
         self.drawer = Tensor(shape=shape, cell_config=cell_config,
@@ -51,7 +52,7 @@ class TensorView(relation.Node):
 def create_animation(main_widget: Widget, path: str, src_node: TensorView, activates=List[int], duration=1):
     with tempfile.TemporaryDirectory() as tmpdir:
         image_paths = []
-        draw_, canvas = draw.create_canvas(main_widget.region_size())
+        draw_, canvas = draw.create_canvas(main_widget.region_size)
         for i in activates:
             src_node.activate(i)
             main_widget.draw(draw_)
