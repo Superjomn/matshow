@@ -30,7 +30,7 @@ def _font_path() -> str:
     ttf_path = None
     if platform == "linux" or platform == "linux2":
         # choose a random font from the system
-        fonts = subprocess.run(["fc-list"])
+        fonts = subprocess.check_output(["fc-list"])
         assert fonts.stdout
         one_font = fonts.stdout.split('\n')[0]
         ttf_path = one_font.split(':')[0]
