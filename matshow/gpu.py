@@ -12,8 +12,10 @@ CellConfig = Tensor.CellConfig
 
 class TensorView(relation.Node):
     def __init__(self, shape: List[int], cell_config=Tensor.CellConfig(),
-                 activate_fill=(Widget.fill_hl_colors[1], Widget.fill_hl_colors[0])):
-        super(TensorView, self).__init__(0, 31)
+                 activate_fill=(
+                     Widget.fill_hl_colors[1], Widget.fill_hl_colors[0]),
+                 state: relation.State = relation.DefaultState()):
+        super(TensorView, self).__init__(state)
         self._shape = shape
         self.drawer = Tensor(shape=shape, cell_config=cell_config,
                              border=3, outline=Widget.border_colors[0])
@@ -61,6 +63,21 @@ def create_animation(main_widget: Widget, path: str, src_node: TensorView, activ
             canvas.save(img_path, "PNG")
 
             src_node.mark(i)
+
+        draw.to_animation(image_paths, path, duration=duration)
+
+
+def create_animation_by_callback(main_widget: Widget, path: str, callback, duration=1):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        image_paths = []
+        draw_, canvas = draw.create_canvas(main_widget.region_size)
+        counter = 0
+        while callback():
+            main_widget.draw(draw_)
+            img_path = os.path.join(tmpdir, '%d.png' % counter)
+            counter += 1
+            image_paths.append(img_path)
+            canvas.save(img_path, "PNG")
 
         draw.to_animation(image_paths, path, duration=duration)
 
