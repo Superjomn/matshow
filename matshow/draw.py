@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 from matshow import colors
 from sys import platform
 import subprocess
+import sys
 
 try:
     import torch
@@ -32,6 +33,7 @@ def _font_path() -> str:
         # choose a random font from the system
         fonts = subprocess.check_output(["fc-list"])
         assert fonts
+        fonts = fonts.decode(sys.stdout.encoding)
         one_font = fonts.split('\n')[0]
         ttf_path = one_font.split(':')[0]
     elif platform == "darwin":
