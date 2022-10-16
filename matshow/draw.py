@@ -13,6 +13,9 @@ import imageio
 from PIL import Image, ImageDraw, ImageFont
 
 from matshow import colors
+from sys import platform
+import subprocess
+import sys
 
 try:
     import torch
@@ -24,13 +27,30 @@ except:
 RESOLUTION = 1
 
 
-def font(size):
+def _font_path() -> str:
+    ttf_path = None
+    if platform == "linux" or platform == "linux2":
+        # choose a random font from the system
+        fonts = subprocess.check_output(["fc-list"])
+        assert fonts
+        fonts = fonts.decode(sys.stdout.encoding)
+        one_font = fonts.split('\n')[0]
+        ttf_path = one_font.split(':')[0]
+    elif platform == "darwin":
+        # Not considered yet.
+        pass
+    elif platform == "win32":
+        # The arial.ttf should exist in Windows
+        ttf_path = "arial.ttf"
+    return ttf_path
+
+
+def font(size: int):
     '''
     :param size:
     :return:
     '''
-    path = "arial.ttf"
-    font = ImageFont.truetype(path, size)
+    font = ImageFont.truetype(_font_path(), size)
     return font
 
 
@@ -74,7 +94,7 @@ class Widget(abc.ABC):
         self.texts: List[Widget.Text] = []
 
     @abc.abstractmethod
-    def draw(self, draw_: ImageDraw, offset: tuple[int, int]):
+    def draw(self, draw_: ImageDraw, offset: Tuple[int, int]):
         raise NotImplemented
 
     @property
