@@ -70,7 +70,7 @@ def create_animation(main_widget: Widget, path: str, src_node: TensorView, activ
 def create_animation_by_callback(main_widget: Widget, path: str, callback, duration=1):
     with tempfile.TemporaryDirectory() as tmpdir:
         image_paths = []
-        draw_, canvas = draw.create_canvas(main_widget.region_size)
+        draw_, canvas = draw.create_canvas(main_widget.outer_size)
         counter = 0
         while callback():
             main_widget.draw(draw_)

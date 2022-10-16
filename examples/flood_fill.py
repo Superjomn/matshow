@@ -53,4 +53,4 @@ def create_matrix(nrows: int, ncols: int, cell_config, start: int) -> TensorView
 
 
 if __name__ == '__main__':
-    create_matrix(10, 10, CellConfig(), start=4)
+    create_matrix(20, 20, CellConfig(), start=100)
