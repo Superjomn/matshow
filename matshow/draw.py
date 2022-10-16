@@ -94,7 +94,7 @@ class Widget(abc.ABC):
         self.texts: List[Widget.Text] = []
 
     @abc.abstractmethod
-    def draw(self, draw_: ImageDraw, offset: tuple[int, int]):
+    def draw(self, draw_: ImageDraw, offset: Tuple[int, int]):
         raise NotImplemented
 
     @property
