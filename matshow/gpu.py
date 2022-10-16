@@ -54,7 +54,7 @@ class TensorView(relation.Node):
 def create_animation(main_widget: Widget, path: str, src_node: TensorView, activates=List[int], duration=1):
     with tempfile.TemporaryDirectory() as tmpdir:
         image_paths = []
-        draw_, canvas = draw.create_canvas(main_widget.region_size)
+        draw_, canvas = draw.create_canvas(main_widget.outer_size)
         for i in activates:
             src_node.activate(i)
             main_widget.draw(draw_)
