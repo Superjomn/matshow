@@ -64,7 +64,7 @@ class Relation(abc.ABC):
         self.target = target
         self.map: Callable[[int], [int]] = None
 
-    def set_map(self, fn: Callable[[int], [int]]) -> None:
+    def set_map(self, fn: Callable[[int], List[int]]) -> None:
         '''
         Given an offset i, return a list of offsets it maps to.
         '''
