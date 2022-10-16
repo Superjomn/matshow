@@ -62,7 +62,7 @@ class Relation(abc.ABC):
 
     def __init__(self, target: Node):
         self.target = target
-        self.map: Callable[[int], [int]] = None
+        self.map: Optional[Callable[[int], List[int]]] = None
 
     def set_map(self, fn: Callable[[int], List[int]]) -> None:
         '''
