@@ -9,4 +9,3 @@ WIP: A visualizer for demonstrate algorithms inter or intra matrices.
 ### Naive GEMM
 
 ![](https://user-images.githubusercontent.com/328693/196416260-f25a0c5b-0af3-4221-8349-bb7a3d2ab7b6.gif)
-
