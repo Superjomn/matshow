@@ -15,7 +15,7 @@ class TensorView(relation.Node):
     def __init__(self, shape: List[int], cell_config=Tensor.CellConfig(),
                  activate_fill=(
                      Widget.fill_hl_colors[1], Widget.fill_hl_colors[0]),
-                 state: relation.State = relation.DefaultState(), margin=0):
+                 state: relation.State = relation.DefaultState(), margin=(0, 0)):
         super(TensorView, self).__init__(state)
         self._shape = shape
         self.drawer = Tensor(shape=shape, cell_config=cell_config,
