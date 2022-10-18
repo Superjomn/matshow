@@ -18,7 +18,7 @@ A.drawer.text("A", 30, pos=('mid', 'mid'), fill=matshow.colors.GRAY)
 B.drawer.text("B", 30, pos=('mid', 'mid'), fill=matshow.colors.GRAY)
 C.drawer.text("C", 30, pos=('mid', 'mid'), fill=matshow.colors.GRAY)
 
-stack = matshow.Stack(widgets=[A.drawer, B.drawer, C.drawer], cstride=2)
+stack = matshow.Stack(widgets=[A.drawer, B.drawer, C.drawer], cstride=1)
 
 # Mapping logic
 CTA_to_C = matshow.Relation(C)

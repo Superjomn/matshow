@@ -39,7 +39,7 @@ def test_draw_rectangle():
 
 def test_stack0():
     rec = Rectangle(
-        40, 40, fill=Widget.fill_colors[0], outline=Widget.border_colors[0], border=6)
+        80, 80, fill=colors.RED1, outline=colors.WHITE, border=20)
     table0 = Stack([rec], cstride=4, border=6, outline=colors.SGIBEET)
     draw, canvas = create_canvas(table0.outer_size)
     table0.draw(draw)
@@ -49,6 +49,10 @@ def test_stack0():
     assert table0.inner_size == (
         rec.outer_size[0] + table0.border * 2, rec.outer_size[1] + table0.border * 2)
 
+    assert rec.outer_size == (80, 80)
+    assert table0.outer_size == (80 + 6 * 2, 80 + 6 * 2)
+    assert canvas.size == table0.outer_size
+
 
 def test_stack1():
     rec = Rectangle(
@@ -57,6 +61,8 @@ def test_stack1():
                    border=6, outline=colors.SGIBEET)
     draw, canvas = create_canvas(table0.outer_size)
     table0.draw(draw)
+
+    assert canvas.size == table0.outer_size
 
     canvas.save(os.path.join(get_test_img_root(), "./stack1.png"))
 
@@ -79,7 +85,7 @@ def test_stack_with_margin():
         rec.outer_size[0] + table0.border * 2, rec.outer_size[1] + table0.border * 2)
 
 
-def test_stack():
+def test_text():
     rec = Rectangle(
         40, 40, fill=Widget.fill_colors[0], outline=Widget.border_colors[0], border=2)
     rec.text('1', fontsize=20, fill=colors.RED1, pos=('mid', 'mid'))
@@ -100,4 +106,8 @@ def test_stack():
     draw, canvas = create_canvas(main.outer_size)
     main.draw(draw)
 
-    canvas.save(os.path.join(get_test_img_root(), "./stack.png"))
+    canvas.save(os.path.join(get_test_img_root(), "./text.png"))
+
+
+if __name__ == '__main__':
+    test_stack0()
