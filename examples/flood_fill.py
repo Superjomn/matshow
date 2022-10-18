@@ -2,7 +2,6 @@ from typing import *
 
 from matshow import *
 from matshow import relation as rel
-from matshow.gpu import create_animation
 from matshow.relation import Node as RelNode
 
 queue = []
