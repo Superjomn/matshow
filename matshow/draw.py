@@ -103,6 +103,7 @@ class Widget(abc.ABC):
 
     def __init__(self):
         self.texts: List[Widget.Text] = []
+        self.fill = None
 
     def draw(self, draw_: ImageDraw, offset: Tuple[int, int] = (0, 0)):
         self._draw(draw_, offset)
@@ -120,6 +121,7 @@ class Widget(abc.ABC):
         '''
         raise NotImplemented
 
+    @property
     def inner_size(self) -> Tuple[int, int]:
         '''
         Get the size of the widget.
@@ -241,13 +243,6 @@ class Rectangle(Widget):
                         outline=self.outline,
                         width=self.border)
 
-    # def _draw_text(self, draw_: ImageDraw):
-    #     for txt in self.texts:
-    #         draw_.text(txt.content,
-    #                    font=font(txt.fontsize),
-    #                    offset=txt.offset,
-    #                    fill=txt.fill)
-
     @property
     def outer_size(self) -> Tuple[int, int]:
         width = self.width + self.margin[0] * 2
@@ -287,6 +282,16 @@ class Stack(Widget):
         assert widget != self, "recursion found"
         self.widgets.append(widget)
 
+    def insert(self, widget: Widget, pos=0):
+        self.widgets.insert(pos, widget)
+
+    def set_label(self, text, fontsize, color=colors.BLACK, fill=colors.WHITE):
+        size = self.inner_size
+        rec = Rectangle(width=size[0] - self.border,
+                        height=fontsize*2, border=0, fill=fill)
+        rec.text(text, pos=('mid', 'mid'), fontsize=fontsize, fill=color)
+        self.insert(rec)
+
     def __repr__(self):
         return '<Stack #%d %s>' % (len(self.widgets), hash(self))
 
@@ -298,6 +303,9 @@ class Stack(Widget):
 
     def set_outline(self, outline: ColorTy):
         self.outline = outline
+
+    def set_margin(self, margin: Tuple[int, int]):
+        self.margin = margin
 
     def get_cell(self, offset: int):
         if type(self.widgets[0]) is Stack:
@@ -330,15 +338,15 @@ class Stack(Widget):
                             fill=self.fill,
                             outline=self.outline)
 
-        offset_y = offset[1] + self.border
+        offset_y = offset[1] + self.margin[1] + self.border
         for i in range(math.ceil(len(self.widgets) / self.cstride)):
-            offset_x = offset[0] + self.border
+            offset_x = offset[0] + self.border + self.margin[0]
             max_col_size = 0
             for j in range(self.cstride):
-                abs_offset = i * self.cstride + j
-                if abs_offset >= len(self.widgets):
+                nth = i * self.cstride + j
+                if nth >= len(self.widgets):
                     break
-                cur = self.widgets[abs_offset]
+                cur = self.widgets[nth]
                 assert cur != self
                 cur.draw(draw_, (offset_x, offset_y))
                 offset_x += cur.outer_size[0]
@@ -358,8 +366,8 @@ class Stack(Widget):
             x_size = 0
             y_size = 0
             for j in range(self.cstride):
-                abs_offset = i * self.cstride + j
-                if abs_offset >= len(self.widgets):
+                nth = i * self.cstride + j
+                if nth >= len(self.widgets):
                     break
                 cur = self.widgets[i * self.cstride + j]
                 x_size += cur.outer_size[0]
@@ -381,8 +389,7 @@ class Stack(Widget):
 
 
 def create_canvas(size=(500, 300),
-                  fill=(128, 128,
-                        128)) -> Tuple[ImageDraw.ImageDraw, Image.Image]:
+                  fill=colors.GRAY) -> Tuple[ImageDraw.ImageDraw, Image.Image]:
     im = Image.new('RGB', size, fill)
     draw = ImageDraw.Draw(im)
     return draw, im
@@ -396,7 +403,8 @@ class Tensor(Widget):
                      height: int = None,
                      fill: ColorTy = colors.SANDYBROWN,
                      border=1,
-                     outline: ColorTy = colors.SEAGREEN4):
+                     outline: ColorTy = colors.SEAGREEN4,
+                     ):
             self.width = width
             self.height = height if height else width
             self.fill = fill
@@ -415,8 +423,11 @@ class Tensor(Widget):
                  shape: List[int],
                  data: torch.Tensor = None,
                  border: int = 0,
-                 outline: ColorTy = None,
-                 cell_config: CellConfig = CellConfig(20, 20)):
+                 outline: ColorTy = colors.BLACK,
+                 margin=(0, 0),
+                 fill: ColorTy = colors.WHITE,
+                 cell_config: CellConfig = CellConfig(20, 20),
+                 ):
         super(Tensor, self).__init__()
         assert len(
             shape
@@ -425,17 +436,37 @@ class Tensor(Widget):
         self.outline = outline
         self.cell_config = cell_config
         self.shape = shape
+        self.fill = fill
         self.data = data if data else [i for i in range(math.prod(self.shape))]
         self.stack = self.get_main()
+        self.stack.set_margin(margin)
 
     def _draw(self, draw_: ImageDraw, offset=(0, 0)):
-        self.stack.draw(draw_, offset)
+        if self.border > 0:
+            width, height = self.inner_size
+            coor = [
+                offset[0],  # left
+                offset[1],  # top
+                offset[0] + width,  # right
+                offset[1] + height,  # bottom
+            ]
+            draw_.rectangle(coor,
+                            width=self.border,
+                            fill=self.fill,
+                            outline=self.outline)
+
+        inner_offset = (offset[0] + self.border, offset[1] + self.border)
+        self.stack.draw(draw_, inner_offset)
 
     @property
-    def outer_size(self) -> Tuple[int, int]:
+    def inner_size(self) -> Tuple[int, int]:
         size = self.stack.outer_size
         size = (size[0] + 2 * self.border, size[1] + 2 * self.border)
         return size
+
+    @property
+    def outer_size(self) -> Tuple[int, int]:
+        return self.inner_size
 
     def get_cell(self, offset):
         return self.stack.get_cell(offset)
@@ -451,7 +482,7 @@ class Tensor(Widget):
                 stack.add(cell)
         elif rank == 2:
             stack = Stack(cstride=self.shape[1],
-                          border=2,
+                          border=0,
                           outline=Widget.border_colors[0])
             for i in range(self.shape[0] * self.shape[1]):
                 cell = Rectangle(**self.cell_config.dict_)
@@ -473,7 +504,6 @@ class Tensor(Widget):
 
 def to_animation(image_paths: List[str], gif_path: str, duration: int = 1):
     images = [imageio.imread(path) for path in image_paths]
-    print('gif_path', gif_path)
     imageio.mimsave(gif_path, images, 'GIF', duration=duration)
 
 

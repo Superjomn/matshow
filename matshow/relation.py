@@ -45,7 +45,7 @@ class Node(abc.ABC):
     def add_relation(self, relation: "Relation"):
         self.relations.append(relation)
 
-    def activate(self, offset=None):
+    def activate(self, offset: int):
         '''
         Activate a cell.
         '''
@@ -55,7 +55,6 @@ class Node(abc.ABC):
                 if rel.map:
                     for target in rel.map(offset):
                         rel.target.activate(target)
-                rel.target.activate()
 
     def mark(self, offset):
         '''
@@ -97,8 +96,7 @@ class Relation(abc.ABC):
     It assumes the offset is continuous, the source Node's offset should map to one or more offsets in the target node.
     '''
 
-    def __init__(self, source: Node, target: Node):
-        self.source = source
+    def __init__(self, target: Node):
         self.target = target
         self.map: Optional[Callable[[int], List[int]]] = None
 
