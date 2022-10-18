@@ -1,20 +1,27 @@
 from typing import *
 
 from matshow import *
-from matshow import relation as rel
-from matshow.relation import Node as RelNode
 
 queue = []
 visited = set()
 
 
-def create_matrix(nrows: int, ncols: int, cell_config, start: int) -> TensorView:
+def create_matrix(nrows: int, ncols: int, cell_config, start: int, obstacles: Set[int] = None) -> TensorView:
+    obstacles = obstacles if obstacles else set()
     queue.append(start)
     # === view ===
-    drawer = Tensor(shape=(nrows, ncols), cell_config=cell_config,
+    matrix = Tensor(shape=(nrows, ncols), cell_config=cell_config,
                     border=3, outline=Widget.border_colors[0])
+    view = Stack([matrix], margin=(20, 20), fill=colors.WHITE)
+    view.set_label("Flood Fill Demo", fontsize=40)
+
+    # draw obstacles
+    for x in obstacles:
+        matrix.get_cell(x).fill = colors.BLACK
+        matrix.get_cell(x).text("X", fontsize=20)
 
     # === poplute ===
+
     def callback():
         global queue
 
@@ -23,7 +30,7 @@ def create_matrix(nrows: int, ncols: int, cell_config, start: int) -> TensorView
             cur = queue[0]
             queue = queue[1:]
 
-            if cur in visited:
+            if cur in visited or cur in obstacles:
                 continue
 
             r = cur // ncols
@@ -33,7 +40,7 @@ def create_matrix(nrows: int, ncols: int, cell_config, start: int) -> TensorView
             offset = r * ncols + c
             visited.add(offset)
 
-            drawer.get_cell(offset).fill = Widget.fill_hl_colors[0]
+            matrix.get_cell(offset).fill = Widget.fill_hl_colors[0]
 
             for i in range(4):
                 x = c + offsets[i]
@@ -44,11 +51,13 @@ def create_matrix(nrows: int, ncols: int, cell_config, start: int) -> TensorView
                         queue.append(next)
         return len(queue) > 0
 
-    stack = Stack([drawer], cstride=1)
-
     create_animation_by_callback(
-        stack, "./flood_fill.gif", callback, duration=0.1)
+        view, "./flood_fill.gif", callback, duration=0.1)
 
 
 if __name__ == '__main__':
-    create_matrix(20, 20, CellConfig(), start=100)
+    obstacles = set([15 + 20*i for i in range(19)] +
+                    [28 + 20*i for i in range(19)])
+    obstacles.remove(15 + 10 * 20)
+    obstacles.remove(28 + 13 * 20)
+    create_matrix(20, 20, CellConfig(), start=100, obstacles=obstacles)

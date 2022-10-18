@@ -97,8 +97,7 @@ class Relation(abc.ABC):
     It assumes the offset is continuous, the source Node's offset should map to one or more offsets in the target node.
     '''
 
-    def __init__(self, source: Node, target: Node):
-        self.source = source
+    def __init__(self, target: Node):
         self.target = target
         self.map: Optional[Callable[[int], List[int]]] = None
 

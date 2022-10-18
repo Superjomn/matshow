@@ -103,6 +103,7 @@ class Widget(abc.ABC):
 
     def __init__(self):
         self.texts: List[Widget.Text] = []
+        self.fill = None
 
     def draw(self, draw_: ImageDraw, offset: Tuple[int, int] = (0, 0)):
         self._draw(draw_, offset)
@@ -284,6 +285,13 @@ class Stack(Widget):
     def insert(self, widget: Widget, pos=0):
         self.widgets.insert(pos, widget)
 
+    def set_label(self, text, fontsize, color=colors.BLACK, fill=colors.WHITE):
+        size = self.inner_size
+        rec = Rectangle(width=size[0] - self.border,
+                        height=fontsize*2, border=0, fill=fill)
+        rec.text(text, pos=('mid', 'mid'), fontsize=fontsize, fill=color)
+        self.insert(rec)
+
     def __repr__(self):
         return '<Stack #%d %s>' % (len(self.widgets), hash(self))
 
@@ -378,8 +386,7 @@ class Stack(Widget):
 
 
 def create_canvas(size=(500, 300),
-                  fill=(128, 128,
-                        128)) -> Tuple[ImageDraw.ImageDraw, Image.Image]:
+                  fill=colors.GRAY) -> Tuple[ImageDraw.ImageDraw, Image.Image]:
     im = Image.new('RGB', size, fill)
     draw = ImageDraw.Draw(im)
     return draw, im
@@ -394,13 +401,12 @@ class Tensor(Widget):
                      fill: ColorTy = colors.SANDYBROWN,
                      border=1,
                      outline: ColorTy = colors.SEAGREEN4,
-                     label=""):
+                     ):
             self.width = width
             self.height = height if height else width
             self.fill = fill
             self.border = border
             self.outline = outline
-            self.label = label
 
         @property
         def dict_(self) -> Dict[str, int]:
@@ -429,13 +435,6 @@ class Tensor(Widget):
         self.fill = fill
         self.data = data if data else [i for i in range(math.prod(self.shape))]
         self.stack = self.get_main()
-
-    def label(self, text, fontsize, color=colors.BLACK):
-        size = self.inner_size
-        rec = Rectangle(width=size[0] - self.border,
-                        height=size[1] - self.border, border=0, fill=self.fill)
-        rec.text(text, pos=('mid', 'mid'), fontsize=fontsize, fill=color)
-        self.stack.insert(rec)
 
     def _draw(self, draw_: ImageDraw, offset=(0, 0)):
         if self.border > 0:
