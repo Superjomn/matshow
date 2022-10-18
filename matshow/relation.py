@@ -45,7 +45,7 @@ class Node(abc.ABC):
     def add_relation(self, relation: "Relation"):
         self.relations.append(relation)
 
-    def activate(self, offset=None):
+    def activate(self, offset: int):
         '''
         Activate a cell.
         '''
@@ -55,7 +55,6 @@ class Node(abc.ABC):
                 if rel.map:
                     for target in rel.map(offset):
                         rel.target.activate(target)
-                rel.target.activate()
 
     def mark(self, offset):
         '''

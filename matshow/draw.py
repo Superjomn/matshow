@@ -304,6 +304,9 @@ class Stack(Widget):
     def set_outline(self, outline: ColorTy):
         self.outline = outline
 
+    def set_margin(self, margin: Tuple[int, int]):
+        self.margin = margin
+
     def get_cell(self, offset: int):
         if type(self.widgets[0]) is Stack:
             stride = self.widgets[0].total_stride
@@ -421,6 +424,7 @@ class Tensor(Widget):
                  data: torch.Tensor = None,
                  border: int = 0,
                  outline: ColorTy = colors.BLACK,
+                 margin=(0, 0),
                  fill: ColorTy = colors.WHITE,
                  cell_config: CellConfig = CellConfig(20, 20),
                  ):
@@ -435,6 +439,7 @@ class Tensor(Widget):
         self.fill = fill
         self.data = data if data else [i for i in range(math.prod(self.shape))]
         self.stack = self.get_main()
+        self.stack.set_margin(margin)
 
     def _draw(self, draw_: ImageDraw, offset=(0, 0)):
         if self.border > 0:
