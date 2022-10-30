@@ -307,14 +307,20 @@ class Stack(Widget):
     def set_margin(self, margin: Tuple[int, int]):
         self.margin = margin
 
-    def get_cell(self, offset: int):
-        if type(self.widgets[0]) is Stack:
-            stride = self.widgets[0].total_stride
-            idx = offset // stride
-            return self.widgets[idx].get_cell(offset % stride)
-        if offset >= len(self.widgets):
-            return None
-        return self.widgets[offset]
+    def get_cell(self, *coor):
+        assert len(coor) <= 2
+        if len(coor) == 1:
+            offset = coor[0]
+            if type(self.widgets[0]) is Stack:
+                stride = self.widgets[0].total_stride
+                idx = offset // stride
+                return self.widgets[idx].get_cell(offset % stride)
+            if offset >= len(self.widgets):
+                return None
+            return self.widgets[offset]
+        elif len(coor) == 2:
+            offset = coor[0] * self.cstride + coor[1]
+            return self.get_cell(offset)
 
     @property
     def total_stride(self):
@@ -468,8 +474,8 @@ class Tensor(Widget):
     def outer_size(self) -> Tuple[int, int]:
         return self.inner_size
 
-    def get_cell(self, offset):
-        return self.stack.get_cell(offset)
+    def get_cell(self, *coor):
+        return self.stack.get_cell(*coor)
 
     def get_main(self):
         rank = len(self.shape)
