@@ -320,11 +320,9 @@ class Stack(Widget):
     def total_stride(self):
         assert self.widgets
         cls = type(self.widgets[0])
-        for other in self.widgets[1:]:
-            assert type(
-                other
-            ) is cls, "in total_stride, all the widgets should be the same type"
         if cls is Stack:
+            if self.cstride == math.inf:
+                return len(self.widgets)
             return self.cstride * self.widgets[0].total_stride
         return self.cstride
 
@@ -339,7 +337,10 @@ class Stack(Widget):
                             outline=self.outline)
 
         offset_y = offset[1] + self.margin[1] + self.border
-        for i in range(math.ceil(len(self.widgets) / self.cstride)):
+
+        nrows = 1 if self.cstride == math.inf else math.ceil(
+            len(self.widgets) / self.cstride)
+        for i in range(nrows):
             offset_x = offset[0] + self.border + self.margin[0]
             max_col_size = 0
             for j in range(self.cstride):
@@ -362,7 +363,9 @@ class Stack(Widget):
     def inner_size(self) -> Tuple[int, int]:
         max_x_size = 0
         max_y_size = 0
-        for i in range(math.ceil(len(self.widgets) / self.cstride)):
+        nrows = 1 if self.cstride == math.inf else math.ceil(
+            len(self.widgets) / self.cstride)
+        for i in range(nrows):
             x_size = 0
             y_size = 0
             for j in range(self.cstride):
@@ -386,6 +389,34 @@ class Stack(Widget):
             offset[1] + self.margin[1] + height,  # bottom
         )
         return coor
+
+
+class HStack(Stack):
+    def __init__(self, widgets: List[Widget] = None,
+                 border: int = 0,
+                 fill: ColorTy = None,
+                 outline: ColorTy = None,
+                 margin: Tuple[int, int] = (0, 0)):
+        super(HStack, self).__init__(widgets=widgets,
+                                     cstride=math.inf,
+                                     border=border,
+                                     fill=fill,
+                                     outline=outline,
+                                     margin=margin)
+
+
+class VStack(Stack):
+    def __init__(self, widgets: List[Widget] = None,
+                 border: int = 0,
+                 fill: ColorTy = None,
+                 outline: ColorTy = None,
+                 margin: Tuple[int, int] = (0, 0)):
+        super(VStack, self).__init__(widgets=widgets,
+                                     cstride=1,
+                                     border=border,
+                                     fill=fill,
+                                     outline=outline,
+                                     margin=margin)
 
 
 def create_canvas(size=(500, 300),
