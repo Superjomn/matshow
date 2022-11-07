@@ -10,7 +10,7 @@ def create_matrix(nrows: int, ncols: int, cell_config, start: int, obstacles: Se
     obstacles = obstacles if obstacles else set()
     queue.append(start)
     # === view ===
-    matrix = Tensor(shape=(nrows, ncols), cell_config=cell_config,
+    matrix = Matrix(shape=(nrows, ncols), cell_config=cell_config,
                     border=3, outline=Widget.border_colors[0])
     view = Stack([matrix], margin=(20, 20), fill=colors.WHITE)
     view.set_label("Flood Fill Demo", fontsize=40)
