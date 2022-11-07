@@ -2,7 +2,7 @@ __all__ = [
     "Widget",
     "Rectangle",
     "Stack",
-    "Tensor",
+    "Matrix",
     "to_animation",
     "Ruler",
     "create_canvas",
@@ -46,7 +46,7 @@ def _font_path() -> str:
         ttf_path = one_font.split(":")[0]
     elif platform == "darwin":
         # Not considered yet.
-        pass
+        ttf_path = "Verdana.ttf"
     elif platform == "win32":
         # The arial.ttf should exist in Windows
         ttf_path = "arial.ttf"
@@ -137,7 +137,7 @@ class Widget(abc.ABC):
         content: str,
         fontsize: int,
         fill=colors.BLACK,
-        pos: Tuple[int, int] = ("mid", "mid"),
+        pos: Tuple[str, str] = ("mid", "mid"),
     ) -> None:
         """
         Place a text.
@@ -432,6 +432,43 @@ class VStack(Stack):
         )
 
 
+class Label(Widget):
+    """
+    A label widget.
+    """
+
+    def __init__(
+        self,
+        content: str,
+        width: int,
+        height: int,
+        fontsize: int,
+        fill=colors.BLACK,
+        pos: Tuple[str, str] = ("mid", "mid"),
+    ):
+        super(Label, self).__init__()
+        self.width = width
+        self.height = height
+        self.fill = fill
+        self.border = 0
+
+        self.text(content, fontsize=fontsize, fill=fill, pos=pos)
+
+    def __repr__(self):
+        return "<Label: %s>" % hash(self)
+
+    @property
+    def outer_size(self) -> Tuple[int, int]:
+        return self.width, self.height
+
+    @property
+    def inner_size(self) -> Tuple[int, int]:
+        return self.width, self.height
+
+    def _draw(self, draw_: ImageDraw, offset: Tuple[int, int]):
+        pass
+
+
 def create_canvas(
     size=(500, 300), fill=colors.GRAY
 ) -> Tuple[ImageDraw.ImageDraw, Image.Image]:
@@ -440,7 +477,7 @@ def create_canvas(
     return draw, im
 
 
-class Tensor(Widget):
+class Matrix(Widget):
     class CellConfig:
         def __init__(
             self,
@@ -476,10 +513,10 @@ class Tensor(Widget):
         fill: ColorTy = colors.WHITE,
         cell_config: CellConfig = CellConfig(20, 20),
     ):
-        super(Tensor, self).__init__()
+        super(Matrix, self).__init__()
         assert (
             len(shape) <= 3
-        ), "Tensor with more than 3 dimensions is not visualized yet."
+        ), "Matrix with more than 3 dimensions is not visualized yet."
         self.border = border
         self.outline = outline
         self.cell_config = cell_config
@@ -575,7 +612,7 @@ if __name__ == "__main__":
     main.draw(draw)
     """
 
-    tensor = Tensor(shape=[16, 16], cell_config=Tensor.CellConfig(width=40))
+    tensor = Matrix(shape=[16, 16], cell_config=Matrix.CellConfig(width=40))
     tensor.draw(draw)
 
     canvas.show("demo")

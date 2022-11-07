@@ -1,8 +1,8 @@
 import os
 
 from matshow import draw
-from matshow.draw import (HStack, Rectangle, Stack, VStack, Widget, colors,
-                          create_canvas)
+from matshow.draw import (HStack, Label, Rectangle, Stack, VStack, Widget,
+                          colors, create_canvas)
 
 
 def get_test_img_root():
@@ -157,6 +157,13 @@ def test_text():
     main.draw(draw)
 
     canvas.save(os.path.join(get_test_img_root(), "./text.png"))
+
+
+def test_Label():
+    widget = Label("hello world", 200, 100, fontsize=20, fill=colors.RED1)
+    draw, canvas = create_canvas(widget.outer_size)
+    widget.draw(draw)
+    canvas.save(os.path.join(get_test_img_root(), "./label.png"))
 
 
 if __name__ == "__main__":

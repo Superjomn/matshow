@@ -5,20 +5,20 @@ import tempfile
 from typing import *
 
 from matshow import colors, draw, relation
-from matshow.draw import Rectangle, Stack, Tensor, Widget
+from matshow.draw import Matrix, Rectangle, Stack, Widget
 from matshow.relation import Relation
 
-CellConfig = Tensor.CellConfig
+CellConfig = Matrix.CellConfig
 
 
 class TensorView(relation.Node):
-    def __init__(self, shape: List[int], cell_config=Tensor.CellConfig(),
+    def __init__(self, shape: List[int], cell_config=Matrix.CellConfig(),
                  activate_fill=(
                      Widget.fill_hl_colors[1], Widget.fill_hl_colors[0]),
                  state: relation.State = relation.DefaultState(), margin=(0, 0)):
         super(TensorView, self).__init__(state)
         self._shape = shape
-        self.drawer = Tensor(shape=shape, cell_config=cell_config,
+        self.drawer = Matrix(shape=shape, cell_config=cell_config,
                              border=3, outline=Widget.border_colors[0], margin=margin)
 
         self.activate_fill = activate_fill
