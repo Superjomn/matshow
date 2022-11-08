@@ -32,3 +32,7 @@ jobs:
           export PYTHONPATH=$PWD
           pytest
           cd examples && make all
+      - name: Run examples
+        run: |
+          export PYTHONPATH=$PWD
+          cd examples && find . -name "*.py" | xargs python
