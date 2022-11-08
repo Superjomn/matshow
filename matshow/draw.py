@@ -3,6 +3,9 @@ __all__ = [
     "Rectangle",
     "Stack",
     "Matrix",
+    "HStack",
+    "VStack",
+    "LabeledWidget",
     "to_animation",
     "Ruler",
     "create_canvas",
@@ -194,11 +197,11 @@ class Widget(abc.ABC):
                        font=font(txt.fontsize),
                        fill=txt.fill)
 
-    def __get_text_offset(self, container_size: List[int], text_size: List[int],
-                          poses: List[str], i: int):
+    def __get_text_offset(self, container_size: List[int],
+                          text_size: List[int], poses: List[str], i: int):
         assert len(container_size) == len(poses)
-        print('container_size', container_size)
-        print('text_size', text_size)
+        print("container_size", container_size)
+        print("text_size", text_size)
 
         pos = poses[i]
         size = container_size[i]
@@ -350,14 +353,21 @@ class Stack(Widget):
     def widget_count(self):
         return len(self.widgets)
 
-    def get_cell(self, offset: int):
-        if type(self.widgets[0]) is Stack:
-            stride = self.widgets[0].total_stride
-            idx = offset // stride
-            return self.widgets[idx].get_cell(offset % stride)
-        if offset >= len(self.widgets):
-            return None
-        return self.widgets[offset]
+    def get_cell(self, *offset):
+        assert len(offset) <= 2
+        if len(offset) == 1:
+            offset = offset[0]
+            if type(self.widgets[0]) is Stack:
+                stride = self.widgets[0].total_stride
+                idx = offset // stride
+                return self.widgets[idx].get_cell(offset % stride)
+            if offset >= len(self.widgets):
+                return None
+            return self.widgets[offset]
+        elif len(offset) == 2:
+            row, col = offset
+            abs_offset = row * self.cstride + col
+            return self.get_cell(abs_offset)
 
     @property
     def total_stride(self):
@@ -664,8 +674,8 @@ class Matrix(Widget):
     def outer_size(self) -> Tuple[int, int]:
         return self.inner_size
 
-    def get_cell(self, offset):
-        return self.stack.get_cell(offset)
+    def get_cell(self, *offset):
+        return self.stack.get_cell(*offset)
 
     def get_main(self):
         rank = len(self.shape)
