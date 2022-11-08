@@ -19,20 +19,19 @@ B = Matrix(shape=(K, N), border=1, margin=(20, 20),
 #B.text("B", fontsize=20, fill=colors.GRAY1)
 
 ############# mma ###########
-MMA = Matrix(shape=(M, N), border=1, margin=(20, 20))
+#MMA = Matrix(shape=(M, N), border=1, margin=(20, 20))
 
 ############# main view ########
-
-
 A_view = LabeledWidget("$a", fontsize=40, main_widget=A)
-B_view = LabeledWidget("$a", fontsize=40, main_widget=B)
+B_view = LabeledWidget("$b", fontsize=40, main_widget=B)
 
 operand_view = HStack()  # contains two operands
 operand_view.add(A_view)
 operand_view.add(B_view)
 
 overall_view = VStack(widgets=[operand_view, ])
-view = LabeledWidget("mma.m16n8k32.u8", fontsize=40, main_widget=overall_view)
+view = LabeledWidget("mma.m16n8k32.u8 layout",
+                     fontsize=60, main_widget=overall_view)
 
 
 def A_thread_to_data_coors(thread: int):
@@ -75,3 +74,4 @@ for thread in range(32):
 draw_, im = create_canvas(size=view.outer_size, fill=colors.WHITE)
 view.draw(draw_)
 im.show("demo")
+im.save("./mma_16832.png")

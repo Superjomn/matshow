@@ -200,8 +200,6 @@ class Widget(abc.ABC):
     def __get_text_offset(self, container_size: List[int],
                           text_size: List[int], poses: List[str], i: int):
         assert len(container_size) == len(poses)
-        print("container_size", container_size)
-        print("text_size", text_size)
 
         pos = poses[i]
         size = container_size[i]
