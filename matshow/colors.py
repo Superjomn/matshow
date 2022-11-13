@@ -1,6 +1,6 @@
 # The color constant are borrowed from https://www.webucator.com/article/python-color-constants-module/
 # The code is not modified, all rights are reserved by the original authors.
-
+import random
 from collections import OrderedDict, namedtuple
 
 Color = namedtuple('RGB', 'red, green, blue')
@@ -15,6 +15,13 @@ class RGB(Color):
     @property
     def tuple_(self):
         return (self.red, self.green, self.blue)
+
+
+def rand_color() -> RGB:
+    '''
+    Generate a random RGB color.
+    '''
+    return RGB(*[random.randint(0, 256) for i in range(3)])
 
 
 # Color Contants
