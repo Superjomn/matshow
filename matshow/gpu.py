@@ -68,7 +68,7 @@ def create_animation(main_widget: Widget, path: str, src_node: TensorView, activ
 
             src_node.mark(i)
 
-        draw.to_animation(image_paths, path, duration=duration)
+        draw.create_animation(image_paths, path, duration=duration)
 
 
 def create_animation_by_callback(main_widget: Widget, path: str, callback, duration=1):
@@ -84,4 +84,4 @@ def create_animation_by_callback(main_widget: Widget, path: str, callback, durat
             image_paths.append(img_path)
             canvas.save(img_path, "PNG")
 
-        draw.to_animation(image_paths, path, duration=duration)
+        draw.create_animation(image_paths, path, duration=duration)
