@@ -6,7 +6,7 @@ __all__ = [
     "HStack",
     "VStack",
     "LabeledWidget",
-    "to_animation",
+    "create_animation",
     "create_canvas",
 ]
 
@@ -93,9 +93,12 @@ class Widget(abc.ABC):
             for fn in self.post_draw_callbacks:
                 fn()
         else:
-            canvas, draw = create_canvas(self.outer_size, fill=colors.WHITE)
+            if not self._draw_cache or self._draw_cache[1].size != self.outer_size:
+                canvas, draw = create_canvas(
+                    self.outer_size, fill=colors.WHITE)
+                self._draw_cache = [canvas, draw]
+            canvas, draw = self._draw_cache
             self.draw(canvas, offset)
-            self._draw_cache = [canvas, draw]
 
     def show(self, title: str = ""):
         assert self._draw_cache, "Should call `draw` before"
@@ -731,7 +734,10 @@ def create_canvas(
     return draw, im
 
 
-def to_animation(image_paths: List[str], gif_path: str, duration: int = 1):
+def create_animation(image_paths: List[str], gif_path: str, duration: int = 1):
+    '''
+    Create an animation with a list of images.
+    '''
     images = [imageio.imread(path) for path in image_paths]
     imageio.mimsave(gif_path, images, "GIF", duration=duration)
 
