@@ -41,7 +41,8 @@ print(f'sizePerThread: {sizePerThread}')
 ################### create static image begin ###################
 
 def create_warp_view(warpId: int):
-    def createContigCell(): return matshow.Matrix(shape=sizePerThread)
+    def createContigCell(): return matshow.Matrix(shape=sizePerThread,
+                                                  cell_config=matshow.Matrix.CellConfig(fill=colors.LIGHTGREY))
 
     contigsForAWarp = [createContigCell()
                        for i in range(np.product(contigsPerWarp))]
