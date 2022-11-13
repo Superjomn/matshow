@@ -15,7 +15,8 @@ Refernce [Example code](https://github.com/Superjomn/matshow/blob/main/examples/
 Refernce [Example code](https://github.com/Superjomn/matshow/blob/main/examples/mma_int8_instruction.py)
 
 ### workload distribution following blocked layout in OpenAI/Triton
-![](https://user-images.githubusercontent.com/328693/201519089-d1b740ec-f392-4b03-b6fb-83a4dacd5cf6.gif)
+![](https://user-images.githubusercontent.com/328693/201519401-b4dea5da-3f32-4db6-8162-7f7fdba815d3.gif)
+
 Reference [Example code](https://github.com/Superjomn/matshow/blob/main/examples/triton_blocked_layout_demo.py)
 
 ### Naive GEMM
