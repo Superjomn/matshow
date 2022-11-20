@@ -14,7 +14,7 @@ threadsPerWarp = np.array([4, 8])
 shapePerCTA = np.array([32, 64])
 sizePerThread = np.array([2, 4])
 rep = shapePerCTA // (sizePerThread * threadsPerWarp * warpsPerCTA)
-print(rep)
+print(f"rep: {rep}")
 
 # Some deduced parameters
 elemsPerThread = shapePerCTA // (warpsPerCTA * threadsPerWarp)
