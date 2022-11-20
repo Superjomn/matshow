@@ -51,6 +51,6 @@ A.set_thread_to_cells_map(A_thread_to_data_coors)
 B.set_thread_to_cells_map(B_thread_to_data_coors)
 
 view.draw()
-view.show()
+# view.show()
 
 view.save("./mma_16832.png")
