@@ -78,7 +78,7 @@ def draw(draw, output, show):
 
 
 def draw_ABC():
-    content_view = VStack([HStack([A, B]), C])
+    content_view = HStack([A, B, C])
     main_view.set_main_widget(content_view)
     return main_view
 

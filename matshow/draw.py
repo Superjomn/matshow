@@ -64,7 +64,7 @@ def font(size: int):
 
 
 class Widget(abc.ABC):
-    Text = namedtuple("Text", "content, fontsize, container, fill, pos")
+    Text = namedtuple("Text", "content, fontsize, container, fill, pos, direction")
 
     def __init__(self):
         self.texts: List[Widget.Text] = []
@@ -139,10 +139,12 @@ class Widget(abc.ABC):
             fontsize: int,
             fill=colors.BLACK,
             pos: Tuple[str, str] = ("mid", "mid"),
+            direction: str = "ltr"
     ) -> None:
         """
         Place a text.
         :param poses: one of ('mid', 'left', 'right', 'top', 'bottom)
+        :param direction: one of ('ltr', 'rtl', 'ttb')
         """
         VALID_POS = ("mid", "left", "right", "top", "bottom")
         assert pos[0] in VALID_POS and pos[1] in VALID_POS
@@ -150,7 +152,7 @@ class Widget(abc.ABC):
         # get the true size with the font
         text_size = the_font.getsize(content)
 
-        text = Widget.Text(content, fontsize, self, fill, pos)
+        text = Widget.Text(content, fontsize, self, fill, pos, direction)
         self.texts.append(text)
 
     def set_border(self, border: int, outline: colors.RGB):
@@ -197,7 +199,7 @@ class Widget(abc.ABC):
                 offset[1] + self.border + text_offset[1],
             )
             draw_.text(text=txt.content, xy=off,
-                       font=font(txt.fontsize), fill=txt.fill)
+                       font=font(txt.fontsize), fill=txt.fill, direction=txt.direction)
 
     def __get_text_offset(
             self, container_size: List[int], text_size: List[int], poses: List[str], i: int
