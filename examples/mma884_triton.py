@@ -1,7 +1,9 @@
+from typing import *
+
+import numpy as np
+
 from matshow import *
 from matshow.widgets.gpu import WarpDataLayout
-from typing import *
-import numpy as np
 
 
 class MMA884Loader:
@@ -78,7 +80,7 @@ class MMA884Loader:
         quad_n_off = quad_n_off * (self.rep[1] // 2)
 
 
-def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int], shape_per_cta: List[int],
+def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int],
                   ord_a=[1, 0], ord_b=[1, 0],
                   wpt: List[int] = [1, 1]):
     '''
@@ -93,6 +95,7 @@ def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int], shape_per_
     pack_size1 = 2 if is_b_row and (not is_b_vec4) else 1
     rep = [2 * pack_size0, 2 * pack_size1, 1]
     spw = [fpw[0] * 4 * rep[0], fpw[1] * 4 * rep[1], 1]
+    shape_per_cta = [spw[0] * wpt[0], spw[1] * wpt[1]]
 
     def thread_to_cells(thread: int):
         lane = thread % 32
@@ -132,24 +135,26 @@ def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int], shape_per_
         # i indices
         offset_c_m = (lane & 1) + offset_a_m
         idx_m = []
-        for m in range(shape[0], shape_per_cta[0]):
+        for m in range(0, shape[0], shape_per_cta[0]):
             for mm in range(rep[0]):
                 idx_m.append(offset_c_m + m + mm * 2)
         offset_c_n = (lane & 2) + off_warp_n + off_pair_n
         idx_n = []
-        for n in range(shape[1], shape_per_cta[1]):
+        for n in range(0, shape[1], shape_per_cta[1]):
             for nn in range(rep[1]):
-                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn % 2 * 2 * fpw[1] * rep[1])
-                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn % 2 * 2 * fpw[1] * rep[1] + 1)
+                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn %
+                             2 * 2 * fpw[1] * rep[1])
+                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn %
+                             2 * 2 * fpw[1] * rep[1] + 1)
 
         for m in idx_m:
             for n in idx_n:
-                yield (m, n)
+                coord = m, n
+                yield coord
 
-        c_mat = WarpDataLayout(shape=shape, label="C")
-        c_mat.set_thread_to_cells_map(thread_to_cells)
-        c_mat.draw()
-        c_mat.show()
+    c_mat = WarpDataLayout(shape=shape, label="C", random_seed=1)
+    c_mat.set_thread_to_cells_map(thread_to_cells)
+    c_mat.draw()
 
 
-draw_mma884_C(shape=[32, 16], shape_per_cta=[32, 16], is_a_vec4=True, is_b_vec4=True)
+draw_mma884_C(shape=[16, 32], is_a_vec4=True, is_b_vec4=False)
