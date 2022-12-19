@@ -373,7 +373,9 @@ class Stack(Widget):
             return self.widgets[offset]
         elif len(offset) == 2:
             row, col = offset
+            assert col < self.cstride, f"{col} < {self.cstride} failed"
             abs_offset = row * self.cstride + col
+            assert abs_offset < len(self.widgets)
             return self.get_cell(abs_offset)
 
     @property

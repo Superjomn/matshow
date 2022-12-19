@@ -33,14 +33,21 @@ class WarpDataLayout(LabeledWidget):
         self.thread_colors = [colors.RGB(*[random.randint(0, 256)
                                            for i in range(3)]) for i in range(32)]
 
+        # keep a snapshot of the map from thread to cell
+        self.tid_to_cell_summary = []
+
     def set_thread_to_cells_map(self, thread_to_cell_map: Callable[[int], List[Tuple[int, int]]]):
         self.thread_to_cells_map = thread_to_cell_map
         self._colorize_cells()
 
     def _colorize_cells(self):
+        self.tid_to_cell_summary.clear()
         for thread in range(32):
+            this_thread = []
             for (row, col) in self.thread_to_cells_map(thread):
                 cell = self.matrix.get_cell(row, col)
                 cell.fill = self.thread_colors[thread]
                 cell.text("t%d" % thread, fontsize=self.cell_size //
                                                    2, fill=colors.YELLOW1)
+                this_thread.append((row, col))
+            self.tid_to_cell_summary.append(this_thread)
