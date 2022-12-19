@@ -81,7 +81,7 @@ class MMA884Loader:
 
 
 def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int],
-                  ord_a=[1, 0], ord_b=[1, 0],
+                  is_a_row: bool = True, is_b_row=True,
                   wpt: List[int] = [1, 1]):
     '''
     Get ids from the m and n axis.
@@ -89,12 +89,11 @@ def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int],
     fpw = [2, 2, 1]
     warps = np.product(wpt)
     assert warps == 1
-    is_a_row = ord_a[0] != 0
-    is_b_row = ord_b[0] != 0
     pack_size0 = 1 if is_a_row or is_a_vec4 else 2
     pack_size1 = 2 if is_b_row and (not is_b_vec4) else 1
     rep = [2 * pack_size0, 2 * pack_size1, 1]
     spw = [fpw[0] * 4 * rep[0], fpw[1] * 4 * rep[1], 1]
+    vec = 2 * np.array(rep)
     shape_per_cta = [spw[0] * wpt[0], spw[1] * wpt[1]]
 
     def thread_to_cells(thread: int):
@@ -103,7 +102,7 @@ def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int],
 
         warp_0 = warp % wpt[0]
         warp_12 = warp // wpt[0]
-        warp_1 = warp % wpt[1]
+        warp_1 = warp_12 % wpt[1]
 
         # warp offset
         off_warp_m = warp_0 * spw[0]
@@ -142,19 +141,45 @@ def draw_mma884_C(is_a_vec4: bool, is_b_vec4: bool, shape: List[int],
         idx_n = []
         for n in range(0, shape[1], shape_per_cta[1]):
             for nn in range(rep[1]):
-                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn %
-                             2 * 2 * fpw[1] * rep[1])
-                idx_n.append(offset_c_n + n + nn // 2 * 4 + nn %
-                             2 * 2 * fpw[1] * rep[1] + 1)
+                idx_n.append(offset_c_n + n + nn // 2 * 4 + (nn %
+                                                             2) * 2 * fpw[1] * rep[1])
+                idx_n.append(offset_c_n + n + nn // 2 * 4 + (nn %
+                                                             2) * 2 * fpw[1] * rep[1] + 1)
 
         for m in idx_m:
             for n in idx_n:
                 coord = m, n
                 yield coord
 
-    c_mat = WarpDataLayout(shape=shape, label="C", random_seed=1)
+    label = f"D:{shape} a_row,b_row,a_vec4,b_vec4,veca,vecb:{is_a_row}-{is_b_row}-{is_a_vec4}-{is_b_vec4}-{vec[0]}-{vec[1]}"
+    c_mat = WarpDataLayout(shape=shape, label=label, random_seed=1, fontsize=24)
     c_mat.set_thread_to_cells_map(thread_to_cells)
     c_mat.draw()
+    snapshot = c_mat.tid_to_cell_summary
+    # c_mat.show()
+    c_mat.save(label.replace(':', '-') + ".png")
+    return label, snapshot
 
 
-draw_mma884_C(shape=[16, 32], is_a_vec4=True, is_b_vec4=False)
+bools = [True, False]
+shape = [32, 32]
+dic = {}
+for is_a_row in bools:
+    for is_b_row in bools:
+        is_a_vec4 = (not is_a_row) and shape[0] <= 16  # m
+        is_b_vec4 = is_b_row and shape[1] <= 16  # n
+        #print(is_a_row, is_b_row, is_a_vec4, is_b_vec4)
+        label, snapshot = draw_mma884_C(shape=shape, is_a_vec4=is_a_vec4, is_b_vec4=is_b_vec4, is_a_row=is_a_row,
+                                        is_b_row=is_b_row)
+
+        def hash(it):
+            return " ".join(map(str, it))
+
+        key = hash(snapshot)
+        print(key)
+        if key not in dic:
+            dic[key] = []
+        dic[key].append(label)
+
+for dic, labels in dic.items():
+    print(f"same: {labels}")
